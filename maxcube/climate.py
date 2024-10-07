@@ -85,8 +85,9 @@ class MaxDeviceClimate(ClimateEntity):
 
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.AUTO, HVACMode.HEAT]
     _attr_supported_features = (
-        ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE
+        ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.TURN_ON
     )
+    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(self, handler, device):
         """Initialize MAX! Cube ClimateEntity."""
@@ -156,6 +157,12 @@ class MaxDeviceClimate(ClimateEntity):
             self._set_target(MAX_DEVICE_MODE_AUTOMATIC, None)
         else:
             raise ValueError(f"unsupported HVAC mode {hvac_mode}")
+
+    def turn_off(self) -> None:
+        self.set_hvac_mode(HVACMode.OFF)
+
+    def turn_on(self) -> None:
+        self.set_hvac_mode(HVACMode.AUTO)
 
     def _set_target(self, mode: int | None, temp: float | None) -> None:
         """Set the mode and/or temperature of the thermostat.
@@ -306,8 +313,9 @@ class MaxCubeClimate(ClimateEntity):
 
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.AUTO, HVACMode.HEAT]
     _attr_supported_features = (
-        ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE
+        ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.TURN_ON
     )
+    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(self, handler, device):
         """Initialize MAX! Cube ClimateEntity."""
@@ -385,7 +393,13 @@ class MaxCubeClimate(ClimateEntity):
             self._device.target_temperature = (MIN_TEMPERATURE+MAX_TEMPERATURE)/2
             self._set_target(MAX_DEVICE_MODE_AUTOMATIC, 0)
         else:
-            raise ValueError(f"unsupported HVAC mode {hvac_mode}")
+            raise ValueError(f"unsupported HVAC mode {hvac_mode}")  
+    
+    def turn_off(self) -> None:
+        self.set_hvac_mode(HVACMode.OFF)
+
+    def turn_on(self) -> None:
+        self.set_hvac_mode(HVACMode.AUTO)
 
     def _set_target(self, mode: int, temp: float ) -> None: #THIS
         with self._cubehandle.mutex:
