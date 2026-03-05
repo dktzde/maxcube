@@ -1,7 +1,7 @@
 """Support for MAX! valve opening percentage sensors via MAX! Cube."""
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -50,6 +50,7 @@ class MaxCubeDutyCycleSensor(SensorEntity):
     """Duty Cycle des MAX! Cube (868MHz Funkauslastung, max 1% = 36s/Stunde)."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, handler):
         """Initialize the sensor."""
@@ -79,6 +80,7 @@ class MaxCubeFreeSlotsSensor(SensorEntity):
     """Freie Speicherslots im MAX! Cube."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, handler):
         """Initialize the sensor."""

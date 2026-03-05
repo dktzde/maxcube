@@ -197,10 +197,10 @@ class MaxCube(MaxDevice):
         self.serial = tokens[0]
         self.rf_address = tokens[1]
         self.firmware_version = (tokens[2][0:2]) + "." + (tokens[2][2:4])
-        if len(tokens) > 4:
-            self._duty_cycle_from_h = int(tokens[4], 16)
         if len(tokens) > 5:
-            self._free_slots_from_h = int(tokens[5], 16)
+            self._duty_cycle_from_h = int(tokens[5], 16)
+        if len(tokens) > 6:
+            self._free_slots_from_h = int(tokens[6], 16)
 
     def parse_m_message(self, message):
         logger.debug("Parsing m_message: " + message)
