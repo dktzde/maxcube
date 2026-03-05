@@ -95,6 +95,10 @@ class MaxCubeFreeSlotsSensor(SensorEntity):
         return self._state
 
     @property
+    def unit_of_measurement(self) -> str:
+        return "slots"
+
+    @property
     def icon(self) -> str:
         return "mdi:memory"
 
