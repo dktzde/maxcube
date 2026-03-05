@@ -62,6 +62,10 @@ class MaxCube(MaxDevice):
         self.devices = []
         self.rooms = []
         self._now: Callable[[], datetime] = now
+        # Duty Cycle aus H-Message (Fallback wenn noch kein s: Befehl gesendet)
+        # Erstellt: 2026-03-05 durch Sonett 4.6
+        self._duty_cycle_from_h: int = 0
+        self._free_slots_from_h: int = 0
         self.update()
         self.log()
 
@@ -75,6 +79,20 @@ class MaxCube(MaxDevice):
 
     def disconnect(self):
         self.__commander.disconnect()
+
+    @property
+    def duty_cycle(self) -> int:
+        """Duty Cycle in % (0-100). Aus S-Message wenn verfügbar, sonst H-Message."""
+        if self.__commander.duty_cycle > 0:
+            return self.__commander.duty_cycle
+        return self._duty_cycle_from_h
+
+    @property
+    def free_memory_slots(self) -> int:
+        """Freie Speicherslots im Cube."""
+        if self.__commander.free_memory_slots > 0:
+            return self.__commander.free_memory_slots
+        return self._free_slots_from_h
 
     def __str__(self):
         return self.describe("CUBE", f"firmware={self.firmware_version}")
@@ -179,6 +197,10 @@ class MaxCube(MaxDevice):
         self.serial = tokens[0]
         self.rf_address = tokens[1]
         self.firmware_version = (tokens[2][0:2]) + "." + (tokens[2][2:4])
+        if len(tokens) > 4:
+            self._duty_cycle_from_h = int(tokens[4], 16)
+        if len(tokens) > 5:
+            self._free_slots_from_h = int(tokens[5], 16)
 
     def parse_m_message(self, message):
         logger.debug("Parsing m_message: " + message)

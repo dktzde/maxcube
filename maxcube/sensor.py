@@ -18,6 +18,10 @@ def setup_platform(
     """Iterate through all MAX! Radiator Thermostat Devices."""
     devices: list[MaxCubePercentageSensorBase] = []
     for handler in hass.data[DATA_KEY].values():
+        # Duty Cycle + Free Slots pro Cube
+        # Erstellt: 2026-03-05 durch Sonett 4.6
+        devices.append(MaxCubeDutyCycleSensor(handler))
+        devices.append(MaxCubeFreeSlotsSensor(handler))
         for device in handler.cube.devices:
             if device.is_thermostat():
                 devices.append(MaxCubeValve(handler, device))
@@ -38,6 +42,63 @@ class MaxCubePercentageSensorBase(SensorEntity):
     def update(self) -> None:
         """Get latest data from MAX! Cube."""
         self._cubehandle.update()
+
+# Duty Cycle Sensor - zeigt 868MHz Funkauslastung des Cubes in %
+# Aktualisiert sich: beim HA-Start (H-Message) und nach jedem set_programme-Aufruf (S-Message)
+# Erstellt: 2026-03-05 durch Sonett 4.6
+class MaxCubeDutyCycleSensor(SensorEntity):
+    """Duty Cycle des MAX! Cube (868MHz Funkauslastung, max 1% = 36s/Stunde)."""
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, handler):
+        """Initialize the sensor."""
+        self._cubehandle = handler
+        self._attr_name = "MaxCube Duty Cycle"
+        self._attr_unique_id = f"{handler.cube.serial}_duty_cycle"
+        self._state = None
+
+    @property
+    def state(self):
+        """Return the duty cycle percentage."""
+        return self._state
+
+    @property
+    def unit_of_measurement(self) -> str:
+        return "%"
+
+    @property
+    def icon(self) -> str:
+        return "mdi:radio-tower"
+
+    def update(self) -> None:
+        self._state = self._cubehandle.cube.duty_cycle
+
+
+class MaxCubeFreeSlotsSensor(SensorEntity):
+    """Freie Speicherslots im MAX! Cube."""
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, handler):
+        """Initialize the sensor."""
+        self._cubehandle = handler
+        self._attr_name = "MaxCube Free Memory Slots"
+        self._attr_unique_id = f"{handler.cube.serial}_free_memory_slots"
+        self._state = None
+
+    @property
+    def state(self):
+        """Return the number of free memory slots."""
+        return self._state
+
+    @property
+    def icon(self) -> str:
+        return "mdi:memory"
+
+    def update(self) -> None:
+        self._state = self._cubehandle.cube.free_memory_slots
+
 
 class MaxCubeValve(MaxCubePercentageSensorBase):
     """Representation of a MAX! Cube valve aperture Sensor device."""
