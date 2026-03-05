@@ -25,5 +25,36 @@ Class:
 - fixed command transmission to manage cube-level commands
 
 # Use
-Just put the full directory in the config/custom_components dir.  
+Just put the full directory in the config/custom_components dir.
 The use is the very same of the original integration.
+
+# Changelog
+
+## 2026-03-05
+**Reconnect after connection loss (fix)**
+- `MaxCubeHandle` now stores `host` and `port`
+- On `socket.timeout` during update: automatic disconnect + reconnect instead of just logging an error
+- Prevents heating from going offline until next HA restart after a network interruption or nightly Cube reboot
+
+**New HA service: `maxcube.set_programme`**
+- Allows setting the weekly heating schedule for any thermostat directly via HA service call
+- Parameters: `rf_address` (device RF address), `day` (monday–sunday), `slots` (list of `{temp, until}`)
+- No extra radio transmission if the programme is already identical
+- Example call:
+  ```yaml
+  service: maxcube.set_programme
+  data:
+    rf_address: "190CFC"
+    day: "monday"
+    slots:
+      - temp: 11.5
+        until: "07:00"
+      - temp: 19.5
+        until: "08:00"
+      - temp: 11.5
+        until: "17:00"
+      - temp: 18.5
+        until: "19:00"
+      - temp: 11.5
+        until: "24:00"
+  ```
