@@ -31,6 +31,15 @@ def setup_platform(
 
     add_entities(devices)
 
+    # Dynamische Entity-Registrierung für neue Geräte nach Pairing
+    # Erstellt: 2026-03-09 durch Sonett 4.6
+    def _add_new_binary_sensor(device):
+        new_entities = [MaxCubeBattery(handler, device), MaxCubeLink(handler, device)]
+        if device.is_windowshutter():
+            new_entities.append(MaxCubeShutter(handler, device))
+        add_entities(new_entities)
+    handler._new_binary_sensor_callback = _add_new_binary_sensor
+
 
 class MaxCubeBinarySensorBase(BinarySensorEntity):
     """Base class for maxcube binary sensors."""

@@ -80,6 +80,19 @@ def setup_platform(
 
     devices.append(MaxCubeClimate(handler, handler.cube))
     add_entities(devices)
+
+    # Dynamische Entity-Registrierung für neue Geräte nach Pairing
+    # Erstellt: 2026-03-09 durch Sonett 4.6
+    def _add_new_climate(device):
+        room = handler.cube.room_by_id(device.room_id)
+        if room is None:
+            # Fallback-Raum damit __init__ nicht crasht
+            from .maxcube.room import MaxRoom as _MaxRoom
+            room = _MaxRoom()
+            room.id = device.room_id or 0
+            room.name = "Neu"
+        add_entities([MaxDeviceClimate(handler, device)])
+    handler._new_climate_callback = _add_new_climate
     
 class MaxDeviceClimate(ClimateEntity):
     """MAX! Device ClimateEntity."""

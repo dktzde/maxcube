@@ -66,6 +66,12 @@ class MaxCube(MaxDevice):
         # Erstellt: 2026-03-05 durch Sonett 4.6
         self._duty_cycle_from_h: int = 0
         self._free_slots_from_h: int = 0
+        # Pairing: gesetzt wenn N: Message empfangen wurde
+        # Erstellt: 2026-03-09 durch Sonett 4.6
+        self._new_device_rf = None
+        self._new_device_type = None
+        self._new_device_serial = None
+        self._m_header = bytes([0x00, 0x00])  # erste 2 Bytes der M-Message
         self.update()
         self.log()
 
@@ -146,6 +152,8 @@ class MaxCube(MaxDevice):
                     self.parse_l_message(msg.arg)
                 elif cmd == "M":
                     self.parse_m_message(msg.arg)
+                elif cmd == "N":
+                    self.parse_n_message(msg.arg)
                 else:
                     logger.debug("Ignored unsupported message: %s" % (msg))
             except Exception:
@@ -205,6 +213,7 @@ class MaxCube(MaxDevice):
     def parse_m_message(self, message):
         logger.debug("Parsing m_message: " + message)
         data = bytearray(base64.b64decode(message.split(",")[2]))
+        self._m_header = bytes(data[:2])  # erste 2 Bytes für build_m_payload speichern
         num_rooms = data[2]
 
         pos = 3
@@ -223,9 +232,11 @@ class MaxCube(MaxDevice):
                 room = MaxRoom()
                 room.id = room_id
                 room.name = name
+                room.rf_address = device_rf_address  # Group RF Address speichern
                 self.rooms.append(room)
             else:
                 room.name = name
+                room.rf_address = device_rf_address
 
         num_devices = data[pos]
         pos += 1
@@ -318,6 +329,99 @@ class MaxCube(MaxDevice):
 
             # Advance our pointer to the next submessage
             pos += length + 1
+
+    def parse_n_message(self, message):
+        """Parst N: Message – neues Gerät wurde gepaired.
+        Format nach base64-Decode: [Typ(1)][RF(3)][Serial(10)][unbekannt(1)]
+        Erstellt: 2026-03-09 durch Sonett 4.6
+        """
+        try:
+            data = bytearray(base64.b64decode(message))
+            if len(data) < 14:
+                logger.warning("N message zu kurz: %d Bytes", len(data))
+                return
+            self._new_device_type = data[0]
+            self._new_device_rf = self.parse_rf_address(data[1:4])
+            self._new_device_serial = data[4:14].decode("utf-8", errors="replace")
+            logger.info(
+                "MaxCube: Neues Gerät gepaired – Typ=%d RF=%s Serial=%s",
+                self._new_device_type, self._new_device_rf, self._new_device_serial,
+            )
+        except Exception:
+            logger.warning("Fehler beim Parsen der N-Message: %s", message, exc_info=True)
+
+    def build_m_payload(self) -> str:
+        """Kodiert aktuelle Räume + Geräte als base64-String für m: Befehl.
+        Gleiches Binärformat wie eingehende M: Message.
+        Erstellt: 2026-03-09 durch Sonett 4.6
+        """
+        data = bytearray(self._m_header)
+        data.append(len(self.rooms))
+        for room in self.rooms:
+            name_bytes = room.name.encode("utf-8")
+            data.append(room.id)
+            data.append(len(name_bytes))
+            data.extend(name_bytes)
+            rf = room.rf_address or "000000"
+            data.extend(bytearray.fromhex(rf))
+        device_list = [d for d in self.devices if not d.is_cube()]
+        data.append(len(device_list))
+        for device in device_list:
+            data.append(device.type)
+            data.extend(bytearray.fromhex(device.rf_address))
+            serial = device.serial.encode("utf-8")
+            data.extend(serial[:10].ljust(10))
+            name_bytes = device.name.encode("utf-8")
+            data.append(len(name_bytes))
+            data.extend(name_bytes)
+            data.append(device.room_id if device.room_id else 0)
+        return base64.b64encode(bytes(data)).decode("utf-8")
+
+    def assign_room(self, rf_address: str, room_id: int = None, new_room_name: str = None) -> bool:
+        """Weist ein Gerät einem vorhandenen oder neuen Cube-Raum zu.
+        Sendet danach aktualisierte Metadaten via m: Befehl an den Cube.
+        Erstellt: 2026-03-09 durch Sonett 4.6
+        """
+        device = self.device_by_rf(rf_address.upper())
+        if not device:
+            logger.error("assign_room: Gerät nicht gefunden: %s", rf_address)
+            return False
+
+        if new_room_name:
+            existing_ids = [r.id for r in self.rooms]
+            new_id = max(existing_ids) + 1 if existing_ids else 1
+            new_room = MaxRoom()
+            new_room.id = new_id
+            new_room.name = new_room_name
+            new_room.rf_address = rf_address.upper()
+            self.rooms.append(new_room)
+            device.room_id = new_id
+            logger.info("Neuer Raum '%s' (ID:%d) erstellt für %s", new_room_name, new_id, rf_address)
+        elif room_id is not None:
+            room = self.room_by_id(room_id)
+            if not room:
+                logger.error("assign_room: Raum %d nicht gefunden", room_id)
+                return False
+            device.room_id = room_id
+            logger.info("Gerät %s → Raum '%s' (ID:%d)", rf_address, room.name, room_id)
+        else:
+            logger.error("assign_room: weder room_id noch new_room_name angegeben")
+            return False
+
+        payload = self.build_m_payload()
+        self.__commander.send_metadata(payload)
+        return True
+
+    def start_pairing(self, timeout_secs: int = 60) -> None:
+        """Cube in Pairing-Modus versetzen. Erstellt: 2026-03-09 durch Sonett 4.6"""
+        self._new_device_rf = None
+        self._new_device_type = None
+        self._new_device_serial = None
+        self.__commander.start_pairing(timeout_secs)
+
+    def stop_pairing(self) -> None:
+        """Pairing-Modus abbrechen. Erstellt: 2026-03-09 durch Sonett 4.6"""
+        self.__commander.stop_pairing()
 
     def set_target_temperature(self, thermostat, temperature):
         return self.set_temperature_mode(thermostat, temperature, None)

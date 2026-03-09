@@ -63,6 +63,34 @@ class Commander(object):
             self.disconnect()
         return self.get_unsolicited_messages()
 
+    def start_pairing(self, timeout_secs: int = 60) -> None:
+        """Send n: command to put Cube in pairing mode.
+        N: response arrives later as unsolicited message (picked up by next update()).
+        Erstellt: 2026-03-09 durch Sonett 4.6
+        """
+        if not self.__is_connected():
+            self.__connect(Deadline(CONNECT_TIMEOUT))
+        hex_timeout = format(timeout_secs, "04x")
+        self.__connection.send(Message("n", hex_timeout))
+        logger.info("MaxCube pairing mode started (%ds)", timeout_secs)
+
+    def stop_pairing(self) -> None:
+        """Send x: to cancel pairing mode before timeout.
+        Erstellt: 2026-03-09 durch Sonett 4.6
+        """
+        if self.__is_connected():
+            self.__connection.send(Message("x"))
+            logger.info("MaxCube pairing mode cancelled")
+
+    def send_metadata(self, base64_data: str) -> None:
+        """Send m:00,<data> to write room/device config to Cube.
+        Erstellt: 2026-03-09 durch Sonett 4.6
+        """
+        if not self.__is_connected():
+            self.__connect(Deadline(CONNECT_TIMEOUT))
+        self.__connection.send(Message("m", "00," + base64_data))
+        logger.info("MaxCube metadata sent (%d chars)", len(base64_data))
+
     def send_radio_msg(self, hex_radio_msg: str) -> bool:
         deadline = Deadline(SEND_RADIO_MSG_TIMEOUT)
         request = Message(
