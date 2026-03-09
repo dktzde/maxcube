@@ -30,6 +30,13 @@ The use is the very same of the original integration.
 
 # Changelog
 
+## 2026-03-09
+**Expose weekly programme as state attribute**
+- `climate.py`: added `programme` to `extra_state_attributes` for thermostat entities
+- The attribute is a dict with keys `monday`–`sunday`, each a list of `{"temp": float, "until": "HH:MM"}` slots
+- Data is parsed from the C-message on connection – no extra polling needed
+- Enables automations and scripts to compare the current device programme against a desired schedule without a separate service call
+
 ## 2026-03-05
 **Reconnect after connection loss (fix)**
 - `MaxCubeHandle` now stores `host` and `port`
@@ -58,3 +65,15 @@ The use is the very same of the original integration.
       - temp: 11.5
         until: "24:00"
   ```
+
+**New sensors: Duty Cycle and Free Memory Slots**
+- `sensor.py`: two new diagnostic sensors exposed from the MAX! Cube
+  - `maxcube_duty_cycle` – current RF duty cycle in % (max ~36 s/hour per legal limit)
+  - `maxcube_free_memory_slots` – free programme slots in the Cube's memory
+- Values are read from the S-message response after each `set_programme` call, with fallback to the H-message (greeting) on startup
+- `unit_of_measurement` set on free slots sensor for HA long-term statistics compatibility
+
+**Fix: H-message token index for duty cycle**
+- Corrected off-by-two error in `parse_h_message`: duty cycle is at `tokens[5]`, free slots at `tokens[6]`
+- Previously showed `None` or wrong values on startup before the first `set_programme` call
+
