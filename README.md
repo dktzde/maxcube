@@ -31,6 +31,14 @@ The use is the very same of the original integration.
 # Changelog
 
 ## 2026-03-09
+**Device pairing from Home Assistant**
+- New service `maxcube.start_pairing`: puts Cube in pairing mode (`n:003c`), reduces poll interval to 5s during pairing window. Fires persistent notification when new device is found.
+- New service `maxcube.assign_room`: assigns a newly paired device to an existing Cube room (`room_id`) or creates a new room (`new_room_name`). Writes updated config back via `m:` command (`build_m_payload`).
+- Dynamic entity registration: `MaxCubeHandle._check_new_devices()` detects devices appearing in `cube.devices` after HA start and registers new HA entities without restart (climate, binary sensor, battery, link).
+- `N:` message parsed (`parse_n_message`): extracts device type, RF address, serial.
+- `room.rf_address` added and stored from `M:` message (needed to re-encode config).
+- First 2 bytes of `M:` message preserved as `_m_header` for round-trip encoding.
+
 **Expose weekly programme as state attribute**
 - `climate.py`: added `programme` to `extra_state_attributes` for thermostat entities
 - The attribute is a dict with keys `monday`–`sunday`, each a list of `{"temp": float, "until": "HH:MM"}` slots
