@@ -48,6 +48,7 @@ ATTR_ECO_TEMP = "eco_temp"
 ATTR_ROOM = "room"
 ATTR_DEVICE_ID = "device_id"
 ATTR_DEVICE_RF_ADDRESS = "device_rf_address"
+ATTR_PROGRAMME = "programme"
 PRESET_ON = "On"
 PRESET_WINDOW_OPEN = "Window Open"
 
@@ -276,7 +277,8 @@ class MaxDeviceClimate(ClimateEntity):
                     ATTR_ECO_TEMP: self._device.eco_temperature,
                     ATTR_ROOM: self._attr_room,
                     ATTR_DEVICE_ID: self._attr_unique_id,
-                    ATTR_DEVICE_RF_ADDRESS: self._device.rf_address
+                    ATTR_DEVICE_RF_ADDRESS: self._device.rf_address,
+                    ATTR_PROGRAMME: self._device.programme,
                     }
         
         elif self._device.is_wallthermostat():

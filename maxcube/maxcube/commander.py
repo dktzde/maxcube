@@ -27,6 +27,10 @@ class Commander(object):
         self.use_persistent_connection = True
         self.__connection: Connection = None
         self.__unsolicited_messages: List[Message] = []
+        # Duty Cycle + Free Slots - aus S-Message-Antworten
+        # Erstellt: 2026-03-05 durch Sonett 4.6
+        self.duty_cycle: int = 0
+        self.free_memory_slots: int = 0
 
     def disconnect(self):
         if self.__connection:
@@ -73,6 +77,8 @@ class Commander(object):
         try:
             response = self.__call(request, deadline)
             duty_cycle, status_code, free_slots = response.arg.split(",", 3)
+            self.duty_cycle = int(duty_cycle, 16)
+            self.free_memory_slots = int(free_slots, 16)
             if status_code == "0":
                 logger.debug(
                     "Radio message %s was sent [DutyCycle:%s, StatusCode:%s, FreeSlots:%s]"
