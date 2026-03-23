@@ -4,16 +4,11 @@
 #
 # Voraussetzungen:
 #   - custom:scheduler-card  (HACS)
-#   - custom:streamline-card (HACS)
-#   - maxcube_sync_card.yaml als Streamline-Template eingebunden
 #   - Hilfsentitäten aus ha_helpers/maxcube_sync.yaml im packages/-Ordner
 #   - python_scripts/maxcube_preview.py + maxcube_confirm.py
 #
-# Entity-IDs in der variables-Liste bitte durch eigene ersetzen.
-# Den RF-Adresse des jeweiligen Thermostats findet man unter:
-#   HA Developer Tools → States → climate.<entity> → Attribut device_rf_address
-
-streamline_templates: !include_dir_merge_named Streamline_Vorlagen/
+# Entity-IDs bitte durch eigene ersetzen.
+# RF-Adresse unter: Developer Tools → States → climate.<entity> → device_rf_address
 
 views:
   - title: Heizung Scheduler-Sync
@@ -25,15 +20,60 @@ views:
             heading: Thermostate
             heading_style: title
 
-          # Ein Block pro Thermostat – entity und title anpassen
-          - type: custom:streamline-card
-            template: maxcube_sync_card
-            variables:
-            - entity: climate.your_thermostat_1   # <-- anpassen
-            - title: Zimmer 1                      # <-- anpassen
+          # ── Thermostat 1 ────────────────────────────────────────────────
+          - type: vertical-stack
+            cards:
+              - type: custom:scheduler-card
+                title: Zimmer 1                        # <-- anpassen
+                include:
+                  - climate.your_thermostat_1           # <-- anpassen
+                time_step: 30
 
-          - type: custom:streamline-card
-            template: maxcube_sync_card
-            variables:
-            - entity: climate.your_thermostat_2   # <-- anpassen
-            - title: Zimmer 2                      # <-- anpassen
+              - type: horizontal-stack
+                cards:
+                  - type: button
+                    name: "Scheduler → MaxCube Vorschau"
+                    icon: mdi:calendar-search
+                    tap_action:
+                      action: call-service
+                      service: python_script.maxcube_preview
+                      service_data:
+                        climate_entity_id: climate.your_thermostat_1  # <-- anpassen
+                  - type: entity
+                    entity: sensor.maxcube_duty_cycle
+                    name: Funkauslastung
+
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: input_boolean.maxcube_preview_ready
+                    state: "on"
+                  - condition: state
+                    entity: input_text.maxcube_pending_entity
+                    state: climate.your_thermostat_1   # <-- anpassen
+                card:
+                  type: vertical-stack
+                  cards:
+                    - type: markdown
+                      content: >
+                        {{ states('input_text.maxcube_preview_text') }}
+                        {{ states('input_text.maxcube_preview_geraet') }}
+                    - type: horizontal-stack
+                      cards:
+                        - type: button
+                          name: "✓ Übertragen"
+                          icon: mdi:check-bold
+                          tap_action:
+                            action: call-service
+                            service: python_script.maxcube_confirm
+                        - type: button
+                          name: "✗ Abbrechen"
+                          icon: mdi:close
+                          tap_action:
+                            action: call-service
+                            service: input_boolean.turn_off
+                            service_data:
+                              entity_id: input_boolean.maxcube_preview_ready
+
+          # ── Thermostat 2 ────────────────────────────────────────────────
+          # (Block oben kopieren und climate.your_thermostat_1 ersetzen)

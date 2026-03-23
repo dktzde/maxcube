@@ -29,8 +29,7 @@ ha_helpers/
   maxcube_sync.yaml         input_boolean + input_text Hilfsentitäten (in packages/ ablegen)
 
 ha_dashboard/
-  maxcube_sync_card.yaml    Streamline-Template: Scheduler-Card + Vorschau + Bestätigung
-  example_dashboard.yaml    Minimales Beispiel-Dashboard (Entity-IDs anpassen)
+  example_dashboard.yaml    Minimales Beispiel-Dashboard ohne externe Abhängigkeiten (Entity-IDs anpassen)
 ```
 
 ## Einrichtung
