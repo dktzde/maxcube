@@ -1,0 +1,42 @@
+# MaxCube Scheduler-Sync – Hilfsentitäten
+# Steuert die zweistufige Vorschau+Bestätigung für den Wochenprogramm-Sync.
+# Erstellt: 2026-03-09 durch Sonett 4.6
+# Erweitert: 2026-03-09 durch Sonett 4.6 – generische Entities für alle Thermostate
+
+input_boolean:
+  # Veraltet – wird durch maxcube_preview_ready ersetzt
+  maxcube_buero_preview_ready:
+    name: MaxCube Büro Vorschau bereit
+    icon: mdi:calendar-check
+
+  # Generisch: zeigt an dass ein Vorschau-Ergebnis zur Bestätigung bereit liegt
+  maxcube_preview_ready:
+    name: MaxCube Vorschau bereit
+    icon: mdi:calendar-check
+
+input_text:
+  # Veraltet – wird durch maxcube_preview_text ersetzt
+  maxcube_buero_preview_text:
+    name: MaxCube Büro Vorschau Text
+    max: 255
+    icon: mdi:text
+
+  # Generisch: enthält den formatierten Vorschau-Text (Sched vs. Gerät)
+  maxcube_preview_text:
+    name: MaxCube Vorschau Text
+    max: 255
+    icon: mdi:text
+
+  # Generisch: speichert die Entity-ID des Thermostats im Preview-Modus
+  # Erstellt: 2026-03-09 durch Sonett 4.6
+  maxcube_pending_entity:
+    name: MaxCube Pending Entity
+    max: 100
+    icon: mdi:thermometer
+
+  # Generisch: enthält den formatierten Ist-Programm-Text vom Gerät (Vergleich)
+  # Erstellt: 2026-03-10 durch Sonett 4.6
+  maxcube_preview_geraet:
+    name: MaxCube Vorschau Text (Gerät)
+    max: 255
+    icon: mdi:text

@@ -1,0 +1,39 @@
+# example_dashboard.yaml
+# Minimales Dashboard für den MaxCube Scheduler-Sync.
+# Zeigt pro Thermostat: Scheduler-Card + Vorschau-Button + Bestätigungs-Karte.
+#
+# Voraussetzungen:
+#   - custom:scheduler-card  (HACS)
+#   - custom:streamline-card (HACS)
+#   - maxcube_sync_card.yaml als Streamline-Template eingebunden
+#   - Hilfsentitäten aus ha_helpers/maxcube_sync.yaml im packages/-Ordner
+#   - python_scripts/maxcube_preview.py + maxcube_confirm.py
+#
+# Entity-IDs in der variables-Liste bitte durch eigene ersetzen.
+# Den RF-Adresse des jeweiligen Thermostats findet man unter:
+#   HA Developer Tools → States → climate.<entity> → Attribut device_rf_address
+
+streamline_templates: !include_dir_merge_named Streamline_Vorlagen/
+
+views:
+  - title: Heizung Scheduler-Sync
+    sections:
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Thermostate
+            heading_style: title
+
+          # Ein Block pro Thermostat – entity und title anpassen
+          - type: custom:streamline-card
+            template: maxcube_sync_card
+            variables:
+            - entity: climate.your_thermostat_1   # <-- anpassen
+            - title: Zimmer 1                      # <-- anpassen
+
+          - type: custom:streamline-card
+            template: maxcube_sync_card
+            variables:
+            - entity: climate.your_thermostat_2   # <-- anpassen
+            - title: Zimmer 2                      # <-- anpassen
