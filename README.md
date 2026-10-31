@@ -1,4 +1,16 @@
 # maxcube
+
+> [!IMPORTANT]
+> **This integration is no longer maintained. I moved to [dktzde/max2mqtt](https://github.com/dktzde/max2mqtt).**
+>
+> You don't need the Cube firmware any more: flash your MAX! Cube with [a-culfw](https://github.com/heliflieger/a-culfw/tree/master/culfw/Devices/CUBe) and keep using it over the network as a CUL (like a CUN, TCP port 2323). The add-on talks to the thermostats directly via MQTT – no Cube software, no cloud, no polling. Note: flashing erases the original Cube firmware for good.
+>
+> Switching over without re-pairing your devices:
+> 1. **Before flashing**, note the Cube's RF address (`nc <cube-ip> 62910`, first line `H:<serial>,<rf-address>,…`). If you missed it: open a window with a paired window contact and read `dst=` in the add-on's debug log.
+> 2. Set it as `gateway_id` in the add-on and `serial_port: tcp://<cube-ip>:2323`.
+> 3. Follow "Migrating from the MAX! Cube integration" in the [max2mqtt docs](https://github.com/dktzde/max2mqtt/blob/main/max2mqtt/DOCS.md#migrating-from-the-max-cube-integration): import your settings and week programmes, rename the new entities to your old entity IDs.
+> 4. You can get a lot of help with all of this from Claude – right inside Home Assistant with [Claude Code in Home Assistant](https://github.com/dktzde/hass-claude-code). That's how this move was done: finding the Cube's address over the air, importing the programmes and renaming the entities.
+
 A review of the official homeassistant integration for ELV MAX! heating system
 
 # Context
